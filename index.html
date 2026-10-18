@@ -104,6 +104,7 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
     <h1>📅 Mi Agenda</h1>
     <div class="btns">
       <button class="btn" id="btnRem">🔔 Recordatorio</button>
+      <button class="btn" id="btnTom">🌙 Mañana</button>
       <button class="btn" id="btnSet">⚙️ Ajustes</button>
     </div>
   </header>
@@ -181,7 +182,7 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
 </div>
 
 <dialog id="remDlg">
-  <h2>🔔 Tu día</h2>
+  <h2 id="remTitle">🔔 Tu día</h2>
   <div class="muted" id="remDate"></div>
   <div id="remBody"></div>
   <div class="dlgfoot"><button class="btn primary" id="remClose">Entendido</button></div>
@@ -447,20 +448,35 @@ function remItem(t){
     h("span",{class:"chip"},t.type)
   );
 }
-function showReminder(){
+/* Día al que se refiere el botón "Mañana".
+   Entre las 00:00 y las 02:59 aún cuenta como "hoy" (todavía no te has ido a dormir). */
+function tomorrowTarget(){
+  var n=new Date();
+  if(n.getHours()<3)return {key:todayKey(),night:true};
+  return {key:dateKey(new Date(n.getFullYear(),n.getMonth(),n.getDate()+1)),night:false};
+}
+function showReminder(mode){
+  var tomorrow=(mode==="tomorrow");
   var body=$("#remBody");body.replaceChildren();
   var tk=todayKey();
-  $("#remDate").textContent=fmtLong(tk);
+  var target=tk,night=false;
+  if(tomorrow){var tt=tomorrowTarget();target=tt.key;night=tt.night;}
+  var word=(tomorrow&&!night)?"mañana":"hoy";
+  $("#remTitle").textContent=tomorrow?(night?"🌙 Tus tareas de hoy":"🌙 Tus tareas de mañana"):"🔔 Tu día";
+  $("#remDate").textContent=fmtLong(target);
   $("#remDate").style.textTransform="capitalize";
-  var todays=state.tasks.filter(function(t){return t.date===tk&&!t.done;}).sort(cmp);
-  var late=state.tasks.filter(function(t){return t.date<tk&&!t.done;}).sort(cmp);
+  var todays=state.tasks.filter(function(t){return t.date===target&&!t.done;}).sort(cmp);
+  var late=tomorrow?[]:state.tasks.filter(function(t){return t.date<tk&&!t.done;}).sort(cmp);
   var txt=(state.settings.reminderText||"").trim();
-  if(state.settings.showReminderText&&txt){
+  if(!tomorrow&&state.settings.showReminderText&&txt){
     body.append(h("div",{class:"fixed"},h("strong",{},"📌 Recordatorio fijo"),h("p",{},txt)));
   }
-  body.append(h("div",{class:"sec"},"PARA HOY ("+todays.length+")"));
+  if(night){
+    body.append(h("div",{class:"muted",style:"margin-top:6px"},"Es de madrugada, así que te muestro las tareas de hoy."));
+  }
+  body.append(h("div",{class:"sec"},"PARA "+word.toUpperCase()+" ("+todays.length+")"));
   if(todays.length)todays.forEach(function(t){body.append(remItem(t));});
-  else body.append(h("div",{class:"muted",style:"padding:6px 0"},"No tienes tareas pendientes para hoy. 🎉"));
+  else body.append(h("div",{class:"muted",style:"padding:6px 0"},"No tienes tareas pendientes para "+word+". 🎉"));
   if(late.length){
     body.append(h("div",{class:"sec late"},"ATRASADAS ("+late.length+")"));
     late.slice(0,8).forEach(function(t){
@@ -473,7 +489,8 @@ function showReminder(){
   var dlg=$("#remDlg");
   if(!dlg.open)dlg.showModal();
 }
-$("#btnRem").addEventListener("click",showReminder);
+$("#btnRem").addEventListener("click",function(){showReminder();});
+$("#btnTom").addEventListener("click",function(){showReminder("tomorrow");});
 $("#remClose").addEventListener("click",function(){$("#remDlg").close();});
 
 /* ---------- Ajustes ---------- */
