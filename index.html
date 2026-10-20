@@ -155,7 +155,7 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
         </div>
         <div class="cal" id="cal"></div>
         <div class="calfoot">
-          <button class="btn small" id="btnMode">🔁 Modo hábitos</button>
+          <span class="muted" id="modeLabel"></span>
           <button class="btn small" id="goToday">Ir a hoy</button>
         </div>
         <div class="legend" id="legend" hidden>
@@ -178,6 +178,7 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
           </div>
         </div>
         <div id="dayHabits" hidden></div>
+        <div id="dayProjects" hidden></div>
       </section>
     </div>
 
@@ -488,22 +489,27 @@ function renderCalendar(){
   var _loop=function(d){
     var date=new Date(view.y,view.m,d),key=dateKey(date),wd=date.getDay();
     var weekend=(wd===0||wd===6),custom=state.dayColors[key];
-    var dotsContent,bg="",fg="";
-    if(habitMode){
+    var dotsContent=[],bg="",fg="";
+    if(tab==="habits"){
       var hd=habitDay(key);
       bg=habitColor(key);
       if(bg)fg="#1f2933";
-      dotsContent=(hd.act>0&&key<=tk)?[h("b",{},hd.done+"/"+hd.act)]:[];
+      if(hd.act>0&&key<=tk)dotsContent.push(h("b",{},hd.done+"/"+hd.act));
+    }else if(tab==="projects"){
+      var due=state.projects.filter(function(p){return p.deadline===key&&p.status!=="Terminado";});
+      due.slice(0,4).forEach(function(){dotsContent.push(h("i",{style:"background:var(--accent)"}));});
+      if(due.length>4)dotsContent.push(h("b",{},"+"));
     }else{
       var pend=state.tasks.filter(function(t){return t.date===key&&!t.done;}).sort(cmp);
       bg=custom||"";
       if(custom)fg=textOn(custom);
-      dotsContent=[pend.slice(0,4).map(function(t){return h("i",{style:"background:"+PCOL[t.priority]});}),pend.length>4?h("b",{},"+"):null];
+      pend.slice(0,4).forEach(function(t){dotsContent.push(h("i",{style:"background:"+PCOL[t.priority]}));});
+      if(pend.length>4)dotsContent.push(h("b",{},"+"));
     }
     var cls="day"+(key===tk?" today":"")+(key===selected?" sel":"")+(weekend&&!bg?" weekend":"");
     var btn=h("button",{type:"button",class:cls,"aria-label":fmtLong(key),onclick:function(){
       selected=key;
-      if(!editingId)$("#fDate").value=key;
+      if(tab==="tasks"&&!editingId)$("#fDate").value=key;
       renderAll();
     }},
       h("span",{class:"num"},String(d)),
@@ -523,9 +529,19 @@ function setDayColor(key,color,refreshPanel){
 function renderDayPanel(){
   $("#dayTitle").textContent=fmtLong(selected);
   $("#dayTitle").style.textTransform="capitalize";
-  $("#dayColors").hidden=habitMode;
-  $("#dayHabits").hidden=!habitMode;
-  if(habitMode){
+  $("#dayColors").hidden=tab!=="tasks";
+  $("#dayHabits").hidden=tab!=="habits";
+  $("#dayProjects").hidden=tab!=="projects";
+  if(tab==="projects"){
+    var pbox=$("#dayProjects");pbox.replaceChildren();
+    var dueP=state.projects.filter(function(p){return p.deadline===selected;});
+    $("#dayCount").textContent=dueP.length===0?"Ningún proyecto con fecha objetivo este día":(dueP.length+(dueP.length===1?" proyecto con fecha objetivo":" proyectos con fecha objetivo"));
+    dueP.forEach(function(p){
+      pbox.append(h("div",{class:"hrow"},h("span",{},p.status==="Terminado"?"✅":"🎯"),h("span",{style:"flex:1"},p.name),h("span",{class:"chip"},p.status)));
+    });
+    return;
+  }
+  if(tab==="habits"){
     var box=$("#dayHabits");box.replaceChildren();
     var tk=todayKey(),d=habitDay(selected);
     $("#dayCount").textContent=d.act===0?"Sin hábitos este día":(d.done+" de "+d.act+(d.act===1?" hábito completado":" hábitos completados"));
@@ -844,14 +860,10 @@ function applyTab(){
 document.querySelectorAll(".tab").forEach(function(b){
   b.addEventListener("click",function(){setTab(b.getAttribute("data-tab"));});
 });
-$("#btnMode").addEventListener("click",function(){
-  habitMode=!habitMode;
-  renderAll();
-});
 function renderMode(){
-  $("#btnMode").classList.toggle("on",habitMode);
-  $("#btnMode").textContent=habitMode?"🔁 Modo hábitos: sí":"🔁 Modo hábitos";
-  $("#legend").hidden=!habitMode;
+  var names={tasks:"📅 Calendario de tareas",habits:"🔁 Calendario de hábitos",projects:"🗂️ Calendario de proyectos (fechas objetivo)"};
+  $("#modeLabel").textContent=names[tab];
+  $("#legend").hidden=tab!=="habits";
 }
 
 /* ---------- Recordatorio ---------- */
