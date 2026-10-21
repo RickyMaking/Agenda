@@ -132,6 +132,40 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
 .addstep{display:flex;gap:6px;margin-top:8px}
 .addstep input{flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
 .proj.finished{opacity:.7}
+
+/* Pestañas desplazables */
+.tabs{overflow-x:auto;padding-bottom:2px}
+.tab{flex:1 0 auto;white-space:nowrap;padding:8px 12px}
+form input[type=number]{width:100%;margin-top:3px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:520px){.row4{grid-template-columns:1fr 1fr}}
+
+/* Ejercicio */
+.ex{border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--card)}
+.ex summary{cursor:pointer;padding:8px 10px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.ex summary::-webkit-details-marker{display:none}
+.ex[open] summary{border-bottom:1px solid var(--border)}
+.exbody{padding:8px 10px 10px;font-size:14px}
+
+/* Dinero */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:var(--soft);border-radius:10px;padding:8px 10px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:17px;font-weight:700;word-break:break-word}
+.mrow{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.mrow.head{font-weight:700;color:var(--muted);font-size:12px}
+.mrow.total{font-weight:700;border-bottom:none}
+.mrow .n{font-weight:600;word-break:break-word}
+.mbar{grid-column:1/-1;height:6px;background:var(--soft);border-radius:999px;overflow:hidden}
+.mbar span{display:block;height:100%;background:#5aa469}
+.mbar span.warn{background:#e98a2b}
+.mbar span.over{background:var(--danger)}
+.neg{color:var(--danger);font-weight:700}
+.day .dots b.amt{font-size:10px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:14px}
+.kv span:last-child{font-weight:600;text-align:right}
+.note-warn{background:var(--soft);border-left:4px solid #e98a2b;border-radius:8px;padding:8px 12px;margin:10px 0;font-size:13px}
+.note-ok{background:var(--soft);border-left:4px solid #5aa469;border-radius:8px;padding:8px 12px;margin:10px 0;font-size:13px}
 </style>
 </head>
 <body>
@@ -179,6 +213,8 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
         </div>
         <div id="dayHabits" hidden></div>
         <div id="dayProjects" hidden></div>
+        <div id="dayExercise" hidden></div>
+        <div id="dayMoney" hidden></div>
       </section>
     </div>
 
@@ -187,6 +223,8 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
         <button class="tab on" data-tab="tasks" type="button">✅ Tareas</button>
         <button class="tab" data-tab="habits" type="button">🔁 Hábitos</button>
         <button class="tab" data-tab="projects" type="button">🗂️ Proyectos</button>
+        <button class="tab" data-tab="exercise" type="button">💪 Ejercicio</button>
+        <button class="tab" data-tab="money" type="button">💶 Dinero</button>
       </div>
 
       <!-- TAREAS -->
@@ -305,6 +343,140 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
           <div id="projList" style="margin-top:10px"></div>
         </section>
       </div>
+
+      <!-- EJERCICIO -->
+      <div id="viewExercise" hidden>
+        <section class="card">
+          <h2>Registrar ejercicio</h2>
+          <div class="muted" id="xLogDay" style="text-transform:capitalize;margin-bottom:8px"></div>
+          <form id="xLogForm" autocomplete="off">
+            <label>Ejercicio <select id="xlType"></select></label>
+            <div class="row4">
+              <label>Series <input type="number" id="xlSets" min="0" step="1" inputmode="numeric"></label>
+              <label>Repeticiones <input type="number" id="xlReps" min="0" step="1" inputmode="numeric"></label>
+              <label>Peso (kg) <input type="number" id="xlWeight" min="0" step="0.5" inputmode="decimal"></label>
+              <label>Descanso (s) <input type="number" id="xlRest" min="0" step="5" inputmode="numeric"></label>
+            </div>
+            <label>Notas (opcional) <textarea id="xlNote" maxlength="300"></textarea></label>
+            <div class="actions"><button type="submit" class="btn primary" id="xlSave">Guardar en este día</button></div>
+            <div class="muted" id="xlEmpty" hidden>Primero crea un tipo de ejercicio aquí abajo.</div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2 id="xFormTitle">Nuevo tipo de ejercicio</h2>
+          <form id="xForm" autocomplete="off">
+            <label>Nombre <input type="text" id="xName" required maxlength="60" placeholder="Ej.: Press banca"></label>
+            <label>Descripción (opcional) <textarea id="xDesc" maxlength="400" placeholder="Técnica, agarre, notas…"></textarea></label>
+            <div class="muted" style="margin-bottom:4px">Valores por defecto (opcionales, se rellenan al registrar):</div>
+            <div class="row4">
+              <label>Series <input type="number" id="xSets" min="0" step="1" inputmode="numeric"></label>
+              <label>Repeticiones <input type="number" id="xReps" min="0" step="1" inputmode="numeric"></label>
+              <label>Peso (kg) <input type="number" id="xWeight" min="0" step="0.5" inputmode="decimal"></label>
+              <label>Descanso (s) <input type="number" id="xRest" min="0" step="5" inputmode="numeric"></label>
+            </div>
+            <div class="actions">
+              <button type="submit" class="btn primary" id="xSubmit">Crear ejercicio</button>
+              <button type="button" class="btn" id="xCancel" hidden>Cancelar edición</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Mis ejercicios</h2>
+          <div id="xList"></div>
+        </section>
+      </div>
+
+      <!-- DINERO -->
+      <div id="viewMoney" hidden>
+        <section class="card">
+          <h2>Sueldo y ahorro · <span id="svMonthName" style="text-transform:capitalize"></span></h2>
+          <div class="kpis">
+            <div class="kpi"><div class="l">Sueldo cobrado</div><div class="v" id="svIn"></div></div>
+            <div class="kpi"><div class="l">Gastado</div><div class="v" id="svSp"></div></div>
+            <div class="kpi"><div class="l">Queda del sueldo</div><div class="v" id="svLeft"></div></div>
+          </div>
+          <div id="svDetail"></div>
+          <h2 style="margin-top:16px">Últimos 6 meses: ahorrado vs buscado</h2>
+          <div id="svHist"></div>
+        </section>
+
+        <section class="card">
+          <h2>Configurar sueldo y ahorro</h2>
+          <form id="cfgForm" autocomplete="off">
+            <div class="row">
+              <label>Sueldo mensual (€) <input type="number" id="cfSalary" min="0" step="0.01" inputmode="decimal"></label>
+              <label>Día de cobro <input type="number" id="cfDay" min="1" max="31" step="1" value="1" inputmode="numeric"></label>
+            </div>
+            <label>Ahorro mensual buscado (€) <input type="number" id="cfGoal" min="0" step="0.01" inputmode="decimal"></label>
+            <div class="muted" style="margin-bottom:8px">Cada mes, al llegar el día de cobro, el sueldo se apunta solo en el calendario. Si cambias el objetivo de ahorro, vale desde este mes; los meses anteriores conservan el suyo.</div>
+            <div class="actions"><button type="submit" class="btn primary">Guardar</button></div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Resumen ·<span id="mMonthName" style="text-transform:capitalize"></span></h2>
+          <div class="kpis">
+            <div class="kpi"><div class="l">Presupuesto</div><div class="v" id="mkBudget"></div></div>
+            <div class="kpi"><div class="l">Llevas gastado</div><div class="v" id="mkSpent"></div></div>
+            <div class="kpi"><div class="l">Te queda</div><div class="v" id="mkLeft"></div></div>
+          </div>
+          <div class="muted" id="mProj" style="margin-bottom:8px"></div>
+          <div id="mSummary"></div>
+          <div class="actions" style="margin-top:10px"><button class="btn small" id="mExport" type="button">⬇️ Exportar mes (CSV)</button></div>
+        </section>
+
+        <section class="card">
+          <h2>Añadir gasto</h2>
+          <div class="muted" id="mAddDay" style="text-transform:capitalize;margin-bottom:8px"></div>
+          <form id="mForm" autocomplete="off">
+            <label>Tipo de gasto <select id="meType"></select></label>
+            <div class="row">
+              <label>Importe (€) <input type="number" id="meAmount" min="0" step="0.01" required inputmode="decimal"></label>
+              <label>Nota (opcional) <input type="text" id="meNote" maxlength="80"></label>
+            </div>
+            <div class="actions"><button type="submit" class="btn primary" id="meSave">Añadir gasto</button></div>
+          </form>
+          <hr>
+          <strong>Ingreso extra en este día</strong>
+          <form id="inForm" autocomplete="off" style="margin-top:6px">
+            <div class="row">
+              <label>Importe (€) <input type="number" id="inAmount" min="0" step="0.01" required inputmode="decimal"></label>
+              <label>Nota (opcional) <input type="text" id="inNote" maxlength="80" placeholder="Ej.: paga extra"></label>
+            </div>
+            <div class="actions"><button type="submit" class="btn">Añadir ingreso</button></div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2 id="mtFormTitle">Nuevo tipo de gasto</h2>
+          <form id="mtForm" autocomplete="off">
+            <div class="row">
+              <label>Nombre <input type="text" id="mtName" required maxlength="40"></label>
+              <label>Presupuesto mensual (€) <input type="number" id="mtBudget" min="0" step="0.01" inputmode="decimal"></label>
+            </div>
+            <label style="display:flex;gap:8px;align-items:center;color:var(--text)"><input type="checkbox" id="mtFixed"> Gasto fijo domiciliado</label>
+            <div id="mtFixedBox" hidden>
+              <div class="row">
+                <label>Día del mes <input type="number" id="mtDay" min="1" max="31" step="1" value="1" inputmode="numeric"></label>
+                <label>Importe fijo (€) <input type="number" id="mtAmount" min="0" step="0.01" inputmode="decimal"></label>
+              </div>
+              <div class="muted" style="margin-bottom:8px">Cada mes, al llegar ese día, se apunta solo en el calendario con este importe.</div>
+            </div>
+            <div class="actions">
+              <button type="submit" class="btn primary" id="mtSubmit">Crear tipo</button>
+              <button type="button" class="btn" id="mtCancel" hidden>Cancelar edición</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Tipos de gasto</h2>
+          <div class="muted">El presupuesto mensual total es la suma de todos los tipos y se actualiza solo.</div>
+          <div id="mtList" style="margin-top:10px"></div>
+        </section>
+      </div>
     </div>
   </div>
 </div>
@@ -328,6 +500,7 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
   <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
     <button class="btn small" id="btnTestNotif" type="button">Probar notificación</button>
   </div>
+  <div class="muted" id="testResult" style="margin-top:6px"></div>
   <div class="muted" style="margin-top:6px">Funcionan con la app abierta o en segundo plano. Si el sistema cierra la app por completo, puede que no lleguen.</div>
   <hr>
   <strong>Recordatorio fijo</strong>
@@ -421,8 +594,20 @@ function normalize(o){
     dayColors:o.dayColors&&typeof o.dayColors==="object"?o.dayColors:{},
     habits:Array.isArray(o.habits)?o.habits:[],
     projects:Array.isArray(o.projects)?o.projects:[],
+    exTypes:Array.isArray(o.exTypes)?o.exTypes:[],
+    exLogs:o.exLogs&&typeof o.exLogs==="object"?o.exLogs:{},
+    expTypes:Array.isArray(o.expTypes)?o.expTypes:defaultExpTypes(),
+    expenses:Array.isArray(o.expenses)?o.expenses:[],
+    autoDone:o.autoDone&&typeof o.autoDone==="object"?o.autoDone:{},
+    incomes:Array.isArray(o.incomes)?o.incomes:[],
+    moneyCfg:Object.assign({salary:0,day:1,goal:0,fromMonth:"",goals:{}},o.moneyCfg||{}),
     settings:Object.assign({},DEFAULTS.settings,o.settings||{})
   };
+}
+function defaultExpTypes(){
+  return ["Piso","Internet","Comida","Coche","Regalos","Ropa","Perro","Vacaciones","Extra","Ocio","Enseres"].map(function(n){
+    return {id:uid(),name:n,budget:0,fixed:false,day:1,amount:0};
+  });
 }
 var state=load();
 function load(){
@@ -499,6 +684,15 @@ function renderCalendar(){
       var due=state.projects.filter(function(p){return p.deadline===key&&p.status!=="Terminado";});
       due.slice(0,4).forEach(function(){dotsContent.push(h("i",{style:"background:var(--accent)"}));});
       if(due.length>4)dotsContent.push(h("b",{},"+"));
+    }else if(tab==="exercise"){
+      var nl=(state.exLogs[key]||[]).length;
+      if(nl){bg=HCOL.green;fg="#1f2933";dotsContent.push(h("b",{},"💪"+nl));}
+    }else if(tab==="money"){
+      var dayTot=0,dayIn=0;
+      state.expenses.forEach(function(e){if(e.date===key)dayTot+=Number(e.amount)||0;});
+      state.incomes.forEach(function(i){if(i.date===key)dayIn+=Number(i.amount)||0;});
+      if(dayIn>0){bg="#cfe8d5";fg="#1f2933";dotsContent.push(h("b",{},"💰"));}
+      if(dayTot>0){bg="#d5e3f3";fg="#1f2933";dotsContent.push(h("b",{class:"amt"},Math.round(dayTot)+"€"));}
     }else{
       var pend=state.tasks.filter(function(t){return t.date===key&&!t.done;}).sort(cmp);
       bg=custom||"";
@@ -532,6 +726,10 @@ function renderDayPanel(){
   $("#dayColors").hidden=tab!=="tasks";
   $("#dayHabits").hidden=tab!=="habits";
   $("#dayProjects").hidden=tab!=="projects";
+  $("#dayExercise").hidden=tab!=="exercise";
+  $("#dayMoney").hidden=tab!=="money";
+  if(tab==="exercise"){renderDayExercise();return;}
+  if(tab==="money"){renderDayMoney();return;}
   if(tab==="projects"){
     var pbox=$("#dayProjects");pbox.replaceChildren();
     var dueP=state.projects.filter(function(p){return p.deadline===selected;});
@@ -844,9 +1042,505 @@ function renderProjects(){
   }
 }
 
+/* ---------- Ejercicio ---------- */
+var editingEx=null;
+function numOrEmpty(v){return (v===""||v==null)?"":Number(v);}
+function fmtNum(n){return String(Math.round(Number(n)*100)/100).replace(".",",");}
+function exById(id){return state.exTypes.find(function(x){return x.id===id;});}
+function exName(l){var t=exById(l.typeId);return t?t.name:(l.name||"Ejercicio");}
+function hasVal(v){return v!==""&&v!=null;}
+function exSummary(l){
+  var p=[];
+  if(l.sets||l.reps)p.push((l.sets||"?")+"×"+(l.reps||"?"));
+  if(hasVal(l.weight))p.push(fmtNum(l.weight)+" kg");
+  return p.join(" · ")||"sin datos";
+}
+function lastLog(typeId){
+  var keys=Object.keys(state.exLogs).sort().reverse();
+  for(var i=0;i<keys.length;i++){
+    var arr=state.exLogs[keys[i]];
+    for(var j=arr.length-1;j>=0;j--)if(arr[j].typeId===typeId)return arr[j];
+  }
+  return null;
+}
+function exStats(typeId){
+  var pr=0,n=0;
+  Object.keys(state.exLogs).forEach(function(k){
+    state.exLogs[k].forEach(function(l){
+      if(l.typeId===typeId){n++;if(Number(l.weight)>pr)pr=Number(l.weight);}
+    });
+  });
+  return {pr:pr,n:n};
+}
+function fillLogDefaults(){
+  var id=$("#xlType").value,t=exById(id);
+  if(!t)return;
+  var src=lastLog(id)||t;
+  $("#xlSets").value=hasVal(src.sets)?src.sets:"";
+  $("#xlReps").value=hasVal(src.reps)?src.reps:"";
+  $("#xlWeight").value=hasVal(src.weight)?src.weight:"";
+  $("#xlRest").value=hasVal(src.rest)?src.rest:"";
+}
+function renderExTypeSelect(){
+  var sel=$("#xlType"),prev=sel.value;
+  sel.replaceChildren();
+  state.exTypes.forEach(function(t){sel.append(h("option",{value:t.id},t.name));});
+  var keep=prev&&exById(prev);
+  if(keep)sel.value=prev;
+  else if(state.exTypes.length)fillLogDefaults();
+  $("#xlSave").disabled=!state.exTypes.length;
+  $("#xlEmpty").hidden=state.exTypes.length>0;
+}
+$("#xlType").addEventListener("change",fillLogDefaults);
+function resetExForm(){
+  editingEx=null;
+  $("#xForm").reset();
+  $("#xFormTitle").textContent="Nuevo tipo de ejercicio";
+  $("#xSubmit").textContent="Crear ejercicio";
+  $("#xCancel").hidden=true;
+}
+function startEditEx(t){
+  editingEx=t.id;
+  $("#xName").value=t.name;
+  $("#xDesc").value=t.desc||"";
+  $("#xSets").value=hasVal(t.sets)?t.sets:"";
+  $("#xReps").value=hasVal(t.reps)?t.reps:"";
+  $("#xWeight").value=hasVal(t.weight)?t.weight:"";
+  $("#xRest").value=hasVal(t.rest)?t.rest:"";
+  $("#xFormTitle").textContent="Editar ejercicio";
+  $("#xSubmit").textContent="Guardar cambios";
+  $("#xCancel").hidden=false;
+  $("#xName").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$("#xForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var name=$("#xName").value.trim();
+  if(!name)return;
+  var data={name:name,desc:$("#xDesc").value.trim(),sets:numOrEmpty($("#xSets").value),reps:numOrEmpty($("#xReps").value),weight:numOrEmpty($("#xWeight").value),rest:numOrEmpty($("#xRest").value)};
+  if(editingEx){
+    var t=exById(editingEx);
+    if(t)Object.assign(t,data);
+  }else{
+    state.exTypes.push(Object.assign({id:uid(),created:Date.now()},data));
+  }
+  save();resetExForm();renderAll();
+});
+$("#xCancel").addEventListener("click",resetExForm);
+$("#xLogForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var t=exById($("#xlType").value);
+  if(!t)return;
+  var l={id:uid(),typeId:t.id,name:t.name,sets:numOrEmpty($("#xlSets").value),reps:numOrEmpty($("#xlReps").value),weight:numOrEmpty($("#xlWeight").value),rest:numOrEmpty($("#xlRest").value),note:$("#xlNote").value.trim()};
+  (state.exLogs[selected]=state.exLogs[selected]||[]).push(l);
+  $("#xlNote").value="";
+  save();renderAll();
+});
+function renderExercise(){
+  renderExTypeSelect();
+  $("#xLogDay").textContent="Se guardará en: "+fmtLong(selected);
+  var box=$("#xList");box.replaceChildren();
+  if(!state.exTypes.length){box.append(h("div",{class:"empty"},"Aún no tienes ejercicios. Crea el primero arriba."));return;}
+  state.exTypes.forEach(function(t){
+    var s=exStats(t.id),def=[];
+    if(t.sets||t.reps)def.push((t.sets||"?")+"×"+(t.reps||"?"));
+    if(hasVal(t.weight))def.push(fmtNum(t.weight)+" kg");
+    if(t.rest)def.push("descanso "+t.rest+" s");
+    box.append(h("div",{class:"hab"},
+      h("div",{class:"hhead"},
+        h("div",{style:"min-width:0"},
+          h("div",{class:"hname"},t.name),
+          t.desc?h("div",{class:"notes"},t.desc):null,
+          h("div",{class:"meta"},
+            def.length?h("span",{class:"chip"},"Por defecto: "+def.join(" · ")):null,
+            s.n?h("span",{class:"chip"},s.n+(s.n===1?" registro":" registros")):null,
+            s.pr>0?h("span",{class:"chip"},"🏆 Récord: "+fmtNum(s.pr)+" kg"):null
+          )
+        ),
+        h("div",{class:"tact"},
+          h("button",{class:"icon",title:"Editar","aria-label":"Editar",onclick:function(){startEditEx(t);}},"✏️"),
+          h("button",{class:"icon",title:"Eliminar","aria-label":"Eliminar",onclick:function(){
+            if(confirm("¿Eliminar este ejercicio? Los registros ya guardados se conservan.")){
+              state.exTypes=state.exTypes.filter(function(x){return x.id!==t.id;});
+              if(editingEx===t.id)resetExForm();
+              save();renderAll();
+            }
+          }},"🗑️")
+        )
+      )
+    ));
+  });
+}
+function renderDayExercise(){
+  var box=$("#dayExercise");box.replaceChildren();
+  var logs=state.exLogs[selected]||[],vol=0;
+  logs.forEach(function(l){vol+=(Number(l.sets)||0)*(Number(l.reps)||0)*(Number(l.weight)||0);});
+  $("#dayCount").textContent=logs.length
+    ?(logs.length+(logs.length===1?" ejercicio":" ejercicios")+(vol>0?" · volumen "+fmtNum(vol)+" kg":""))
+    :"Sin ejercicios este día";
+  logs.forEach(function(l){
+    var t=exById(l.typeId);
+    box.append(h("details",{class:"ex"},
+      h("summary",{},h("span",{},exName(l)),h("span",{class:"muted"},exSummary(l))),
+      h("div",{class:"exbody"},
+        h("div",{},"Series: "+(l.sets||"—")+" · Repeticiones: "+(l.reps||"—")),
+        h("div",{},"Peso: "+(hasVal(l.weight)?fmtNum(l.weight)+" kg":"—")+" · Descanso: "+(l.rest?l.rest+" s":"—")),
+        t&&t.desc?h("div",{class:"notes"},t.desc):null,
+        l.note?h("div",{class:"notes"},"📝 "+l.note):null,
+        h("div",{class:"actions",style:"margin-top:8px"},
+          h("button",{type:"button",class:"btn small",onclick:function(){
+            if(!confirm("¿Quitar este registro?"))return;
+            state.exLogs[selected]=(state.exLogs[selected]||[]).filter(function(x){return x.id!==l.id;});
+            if(!state.exLogs[selected].length)delete state.exLogs[selected];
+            save();renderAll();
+          }},"🗑️ Quitar")
+        )
+      )
+    ));
+  });
+}
+
+/* ---------- Dinero ---------- */
+var editingMt=null;
+function money(n){return Number(n||0).toLocaleString("es-ES",{style:"currency",currency:"EUR"});}
+function monthKeyOf(y,m){return y+"-"+pad(m+1);}
+function mtById(id){return state.expTypes.find(function(x){return x.id===id;});}
+function mtName(e){var t=mtById(e.typeId);return t?t.name:(e.name||"Tipo eliminado");}
+function monthExpenses(y,m){var p=monthKeyOf(y,m);return state.expenses.filter(function(e){return e.date.slice(0,7)===p;});}
+
+/* Gastos domiciliados: al llegar el día de cada mes se apuntan solos (una sola vez por mes). */
+function applyFixed(){
+  var now=new Date(),tk=todayKey(),changed=false;
+  state.expTypes.forEach(function(t){
+    if(!t.fixed||!(Number(t.amount)>0)||!t.fromMonth)return;
+    var p=t.fromMonth.split("-").map(Number),y=p[0],m=p[1]-1,guard=0;
+    while((y<now.getFullYear()||(y===now.getFullYear()&&m<=now.getMonth()))&&guard++<600){
+      var dim=new Date(y,m+1,0).getDate();
+      var dk=y+"-"+pad(m+1)+"-"+pad(Math.min(Number(t.day)||1,dim));
+      var ak=t.id+"|"+y+"-"+pad(m+1);
+      if(dk<=tk&&!state.autoDone[ak]){
+        state.autoDone[ak]=true;
+        state.expenses.push({id:uid(),date:dk,typeId:t.id,name:t.name,amount:Number(t.amount),note:"Domiciliado",auto:true,created:Date.now()});
+        changed=true;
+      }
+      m++;if(m>11){m=0;y++;}
+    }
+  });
+  /* Sueldo: se apunta solo cada mes al llegar el día de cobro */
+  var c=state.moneyCfg;
+  if(Number(c.salary)>0&&c.fromMonth){
+    var q=c.fromMonth.split("-").map(Number),sy=q[0],sm=q[1]-1,g2=0;
+    while((sy<now.getFullYear()||(sy===now.getFullYear()&&sm<=now.getMonth()))&&g2++<600){
+      var sd=new Date(sy,sm+1,0).getDate();
+      var sk=sy+"-"+pad(sm+1)+"-"+pad(Math.min(Number(c.day)||1,sd));
+      var sa="salary|"+sy+"-"+pad(sm+1);
+      if(sk<=tk&&!state.autoDone[sa]){
+        state.autoDone[sa]=true;
+        state.incomes.push({id:uid(),date:sk,amount:Number(c.salary),note:"Sueldo",auto:true,created:Date.now()});
+        changed=true;
+      }
+      sm++;if(sm>11){sm=0;sy++;}
+    }
+  }
+  if(changed)save();
+  return changed;
+}
+
+function monthSummary(y,m){
+  var spentBy={},rows=[];
+  monthExpenses(y,m).forEach(function(e){spentBy[e.typeId]=(spentBy[e.typeId]||0)+(Number(e.amount)||0);});
+  state.expTypes.forEach(function(t){
+    rows.push({name:t.name,fixed:!!t.fixed,budget:Number(t.budget)||0,spent:spentBy[t.id]||0});
+    delete spentBy[t.id];
+  });
+  Object.keys(spentBy).forEach(function(k){rows.push({name:"Tipo eliminado",fixed:false,budget:0,spent:spentBy[k]});});
+  return rows;
+}
+
+function renderMoneyTypeSelect(){
+  var sel=$("#meType"),prev=sel.value;
+  sel.replaceChildren();
+  state.expTypes.forEach(function(t){sel.append(h("option",{value:t.id},t.name));});
+  if(prev&&mtById(prev))sel.value=prev;
+  $("#meSave").disabled=!state.expTypes.length;
+}
+
+function renderMoney(){
+  renderMoneyTypeSelect();
+  $("#mMonthName").textContent=new Date(view.y,view.m,1).toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+  $("#mAddDay").textContent="Se apuntará en: "+fmtLong(selected);
+  var rows=monthSummary(view.y,view.m),tb=0,ts=0;
+  rows.forEach(function(r){tb+=r.budget;ts+=r.spent;});
+  var left=tb-ts;
+  $("#mkBudget").textContent=money(tb);
+  $("#mkSpent").textContent=money(ts);
+  $("#mkLeft").textContent=money(left);
+  $("#mkLeft").className="v"+(left<0?" neg":"");
+
+  var now=new Date(),isCur=(view.y===now.getFullYear()&&view.m===now.getMonth());
+  var dim=new Date(view.y,view.m+1,0).getDate(),proj="";
+  if(isCur&&ts>0){
+    var est=ts/now.getDate()*dim;
+    proj="📈 A este ritmo cerrarás el mes en "+money(est)+(tb>0?(est>tb?" · te pasarías "+money(est-tb)+" ⚠️":" · dentro del presupuesto ✅"):"")+" (estimación simple).";
+  }else if(!isCur&&new Date(view.y,view.m,1)<new Date(now.getFullYear(),now.getMonth(),1)&&ts>0){
+    proj="Mes cerrado: "+money(ts)+(tb>0?" de "+money(tb)+" presupuestados.":".");
+  }
+  $("#mProj").textContent=proj;
+
+  var box=$("#mSummary");box.replaceChildren();
+  box.append(h("div",{class:"mrow head"},h("span",{},"Tipo"),h("span",{},"Estimado"),h("span",{},"Gastado"),h("span",{},"Queda")));
+  rows.forEach(function(r){
+    var l=r.budget-r.spent;
+    var pct=r.budget>0?r.spent/r.budget:(r.spent>0?1.01:0);
+    var cls=pct>1?"over":(pct>=0.8?"warn":"");
+    box.append(h("div",{class:"mrow"},
+      h("span",{class:"n"},(r.fixed?"🔁 ":"")+r.name),
+      h("span",{},money(r.budget)),
+      h("span",{},money(r.spent)),
+      h("span",{class:l<0?"neg":""},money(l)),
+      h("div",{class:"mbar"},h("span",{class:cls,style:"width:"+Math.min(100,Math.round(pct*100))+"%"}))
+    ));
+  });
+  box.append(h("div",{class:"mrow total"},h("span",{},"Total"),h("span",{},money(tb)),h("span",{},money(ts)),h("span",{class:left<0?"neg":""},money(left))));
+
+  var list=$("#mtList");list.replaceChildren();
+  if(!state.expTypes.length){list.append(h("div",{class:"empty"},"No hay tipos de gasto."));return;}
+  state.expTypes.forEach(function(t){
+    list.append(h("div",{class:"hab"},
+      h("div",{class:"hhead"},
+        h("div",{style:"min-width:0"},
+          h("div",{class:"hname"},t.name),
+          h("div",{class:"meta"},
+            h("span",{class:"chip"},Number(t.budget)>0?"Presupuesto: "+money(t.budget)+"/mes":"Sin presupuesto"),
+            t.fixed?h("span",{class:"chip"},"🔁 Día "+t.day+" · "+money(t.amount)):null
+          )
+        ),
+        h("div",{class:"tact"},
+          h("button",{class:"icon",title:"Editar","aria-label":"Editar",onclick:function(){startEditMt(t);}},"✏️"),
+          h("button",{class:"icon",title:"Eliminar","aria-label":"Eliminar",onclick:function(){
+            if(confirm("¿Eliminar este tipo de gasto? Los gastos ya apuntados se conservan.")){
+              state.expTypes=state.expTypes.filter(function(x){return x.id!==t.id;});
+              if(editingMt===t.id)resetMtForm();
+              save();renderAll();
+            }
+          }},"🗑️")
+        )
+      )
+    ));
+  });
+}
+
+function renderDayMoney(){
+  var box=$("#dayMoney");box.replaceChildren();
+  var items=state.expenses.filter(function(e){return e.date===selected;}),tot=0;
+  var ins=state.incomes.filter(function(i){return i.date===selected;}),totIn=0;
+  items.forEach(function(e){tot+=Number(e.amount)||0;});
+  ins.forEach(function(i){totIn+=Number(i.amount)||0;});
+  var parts=[];
+  if(items.length)parts.push("Gastado: "+money(tot));
+  if(ins.length)parts.push("Ingresos: "+money(totIn));
+  $("#dayCount").textContent=parts.length?parts.join(" · "):"Sin movimientos este día";
+  ins.forEach(function(i){
+    box.append(h("div",{class:"hrow"},
+      h("span",{style:"flex:1;min-width:0;word-break:break-word"},"💰 "+(i.note||"Ingreso")),
+      h("b",{},"+"+money(i.amount)),
+      h("button",{class:"icon",title:"Quitar","aria-label":"Quitar ingreso",onclick:function(){
+        state.incomes=state.incomes.filter(function(x){return x.id!==i.id;});
+        save();renderAll();
+      }},"✕")
+    ));
+  });
+  items.forEach(function(e){
+    box.append(h("div",{class:"hrow"},
+      h("span",{style:"flex:1;min-width:0;word-break:break-word"},(e.auto?"🔁 ":"")+mtName(e)+((e.note&&!e.auto)?" · "+e.note:"")),
+      h("b",{},money(e.amount)),
+      h("button",{class:"icon",title:"Quitar","aria-label":"Quitar gasto",onclick:function(){
+        state.expenses=state.expenses.filter(function(x){return x.id!==e.id;});
+        save();renderAll();
+      }},"✕")
+    ));
+  });
+}
+
+$("#mForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var t=mtById($("#meType").value),amt=Number($("#meAmount").value);
+  if(!t||!(amt>0))return;
+  state.expenses.push({id:uid(),date:selected,typeId:t.id,name:t.name,amount:amt,note:$("#meNote").value.trim(),created:Date.now()});
+  var d=parseKey(selected);view={y:d.getFullYear(),m:d.getMonth()};
+  $("#meAmount").value="";$("#meNote").value="";
+  save();renderAll();
+  $("#meAmount").focus();
+});
+
+function resetMtForm(){
+  editingMt=null;
+  $("#mtForm").reset();
+  $("#mtFixedBox").hidden=true;
+  $("#mtFormTitle").textContent="Nuevo tipo de gasto";
+  $("#mtSubmit").textContent="Crear tipo";
+  $("#mtCancel").hidden=true;
+}
+function startEditMt(t){
+  editingMt=t.id;
+  $("#mtName").value=t.name;
+  $("#mtBudget").value=Number(t.budget)>0?t.budget:"";
+  $("#mtFixed").checked=!!t.fixed;
+  $("#mtFixedBox").hidden=!t.fixed;
+  $("#mtDay").value=t.day||1;
+  $("#mtAmount").value=Number(t.amount)>0?t.amount:"";
+  $("#mtFormTitle").textContent="Editar tipo de gasto";
+  $("#mtSubmit").textContent="Guardar cambios";
+  $("#mtCancel").hidden=false;
+  $("#mtName").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$("#mtFixed").addEventListener("change",function(e){$("#mtFixedBox").hidden=!e.target.checked;});
+$("#mtCancel").addEventListener("click",resetMtForm);
+$("#mtForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var name=$("#mtName").value.trim();
+  if(!name)return;
+  var fixed=$("#mtFixed").checked;
+  var data={name:name,budget:Number($("#mtBudget").value)||0,fixed:fixed,day:Math.min(31,Math.max(1,Number($("#mtDay").value)||1)),amount:Number($("#mtAmount").value)||0};
+  if(fixed&&!(data.amount>0)){alert("Pon el importe fijo del gasto domiciliado.");return;}
+  var curMonth=monthKeyOf(new Date().getFullYear(),new Date().getMonth());
+  if(editingMt){
+    var t=mtById(editingMt);
+    if(t){
+      var was=t.fixed&&t.fromMonth;
+      Object.assign(t,data);
+      if(fixed&&!was)t.fromMonth=curMonth;
+    }
+  }else{
+    var nt=Object.assign({id:uid()},data);
+    if(fixed)nt.fromMonth=curMonth;
+    state.expTypes.push(nt);
+  }
+  save();resetMtForm();applyFixed();renderAll();
+});
+
+$("#mExport").addEventListener("click",function(){
+  var ex=monthExpenses(view.y,view.m).slice().sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:0);});
+  var rows=[["Fecha","Tipo","Importe","Nota"]].concat(ex.map(function(e){return [e.date,mtName(e),String(e.amount).replace(".",","),e.note||""];}));
+  var csv="﻿"+rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(";");}).join("\n");
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  var a=h("a",{href:URL.createObjectURL(blob),download:"gastos-"+monthKeyOf(view.y,view.m)+".csv"});
+  document.body.append(a);a.click();a.remove();
+});
+
+/* ---------- Sueldo y ahorro ---------- */
+function monthIncome(y,m){
+  var p=monthKeyOf(y,m),t=0;
+  state.incomes.forEach(function(i){if(i.date.slice(0,7)===p)t+=Number(i.amount)||0;});
+  return t;
+}
+function monthSpent(y,m){
+  var t=0;
+  monthExpenses(y,m).forEach(function(e){t+=Number(e.amount)||0;});
+  return t;
+}
+function monthPlan(){
+  var t=0;
+  state.expTypes.forEach(function(x){t+=Number(x.budget)||0;});
+  return t;
+}
+/* Objetivo vigente en un mes: el último que se guardó en ese mes o antes. */
+function goalFor(y,m){
+  var key=monthKeyOf(y,m),bk="",val=0,goals=state.moneyCfg.goals||{};
+  Object.keys(goals).forEach(function(k){if(k<=key&&k>=bk){bk=k;val=Number(goals[k])||0;}});
+  return val;
+}
+function fillCfg(){
+  var c=state.moneyCfg;
+  $("#cfSalary").value=Number(c.salary)>0?c.salary:"";
+  $("#cfDay").value=c.day||1;
+  $("#cfGoal").value=Number(c.goal)>0?c.goal:"";
+}
+$("#cfgForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var c=state.moneyCfg,now=new Date(),cur=monthKeyOf(now.getFullYear(),now.getMonth());
+  var salary=Number($("#cfSalary").value)||0;
+  var wasOn=Number(c.salary)>0;
+  c.salary=salary;
+  c.day=Math.min(31,Math.max(1,Number($("#cfDay").value)||1));
+  c.goal=Number($("#cfGoal").value)||0;
+  c.goals=c.goals||{};
+  c.goals[cur]=c.goal;
+  if(salary>0&&(!wasOn||!c.fromMonth))c.fromMonth=cur;
+  save();applyFixed();renderAll();
+});
+$("#inForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var amt=Number($("#inAmount").value);
+  if(!(amt>0))return;
+  state.incomes.push({id:uid(),date:selected,amount:amt,note:$("#inNote").value.trim(),created:Date.now()});
+  var d=parseKey(selected);view={y:d.getFullYear(),m:d.getMonth()};
+  $("#inAmount").value="";$("#inNote").value="";
+  save();renderAll();
+});
+function kv(label,value,cls){
+  return h("div",{class:"kv"},h("span",{},label),h("span",{class:cls||""},value));
+}
+function renderSavings(){
+  var y=view.y,m=view.m,c=state.moneyCfg;
+  $("#svMonthName").textContent=new Date(y,m,1).toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+  var inc=monthIncome(y,m),sp=monthSpent(y,m),left=inc-sp;
+  $("#svIn").textContent=money(inc);
+  $("#svSp").textContent=money(sp);
+  $("#svLeft").textContent=inc>0?money(left):"—";
+  $("#svLeft").className="v"+(inc>0&&left<0?" neg":"");
+
+  var goal=goalFor(y,m),plan=monthPlan(),base=inc>0?inc:(Number(c.salary)||0);
+  var box=$("#svDetail");box.replaceChildren();
+  if(!(base>0)){
+    box.append(h("div",{class:"muted"},"Configura tu sueldo más abajo para ver cuánto te queda y cuánto ahorras."));
+  }else{
+    var planned=base-plan,limit=base-goal;
+    box.append(kv("Previsión de gastos (suma de presupuestos)",money(plan)));
+    box.append(kv("Ahorro previsto (sueldo − previsión)",money(planned),planned<0?"neg":""));
+    box.append(kv("Ahorro buscado",goal>0?money(goal):"sin definir"));
+    if(goal>0)box.append(kv("Límite de gasto para cumplir tu objetivo",money(limit)));
+    box.append(kv("Ahorrado hasta ahora (sueldo − gastado)",inc>0?money(left):"—",inc>0&&left<0?"neg":""));
+    if(goal>0&&inc>0){
+      var pct=Math.max(0,Math.min(100,Math.round(left/goal*100)));
+      var cls=left>=goal?"":(left<0?"over":(pct>=60?"":"warn"));
+      box.append(h("div",{class:"mbar",style:"margin-top:10px"},h("span",{class:cls,style:"width:"+pct+"%"})));
+      box.append(h("div",{class:"muted",style:"margin-top:4px"},"Llevas "+money(left)+" de "+money(goal)+" ("+Math.round(left/goal*100)+"%)"+(left>=goal?" ✅ objetivo cumplido":"")));
+    }
+    if(goal>0){
+      if(planned<goal)box.append(h("div",{class:"note-warn"},"⚠️ Con tus presupuestos ahorrarías "+money(planned)+", "+money(goal-planned)+" menos que tu objetivo. Tendrías que recortar esa cantidad de la previsión de gastos."));
+      else box.append(h("div",{class:"note-ok"},"✅ Tus presupuestos dejan margen para tu objetivo (sobran "+money(planned-goal)+")."));
+      if(sp>limit)box.append(h("div",{class:"note-warn"},"🔴 Ya has gastado "+money(sp-limit)+" por encima del límite que te permite cumplir el ahorro."));
+    }
+  }
+
+  var hist=$("#svHist");hist.replaceChildren();
+  hist.append(h("div",{class:"mrow head"},h("span",{},"Mes"),h("span",{},"Ahorrado"),h("span",{},"Buscado"),h("span",{},"Resultado")));
+  var any=false;
+  for(var i=5;i>=0;i--){
+    var d=new Date(y,m-i,1),yy=d.getFullYear(),mm=d.getMonth();
+    var ii=monthIncome(yy,mm),ss=monthSpent(yy,mm),g=goalFor(yy,mm);
+    if(ii>0||ss>0)any=true;
+    var sv=ii-ss,hasData=ii>0;
+    var res="—",rcls="";
+    if(hasData&&g>0){res=sv>=g?"✅ +"+money(sv-g):"❌ −"+money(g-sv);rcls=sv>=g?"":"neg";}
+    var ratio=(hasData&&g>0)?Math.max(0,Math.min(1,sv/g)):0;
+    hist.append(h("div",{class:"mrow"},
+      h("span",{class:"n",style:"text-transform:capitalize"},d.toLocaleDateString("es-ES",{month:"short",year:"2-digit"})),
+      h("span",{class:hasData&&sv<0?"neg":""},hasData?money(sv):"—"),
+      h("span",{},g>0?money(g):"—"),
+      h("span",{class:rcls},res),
+      (hasData&&g>0)?h("div",{class:"mbar"},h("span",{class:sv>=g?"":(sv<0?"over":"warn"),style:"width:"+Math.round(ratio*100)+"%"})):null
+    ));
+  }
+  if(!any)hist.append(h("div",{class:"muted",style:"padding-top:8px"},"Cuando tengas sueldo y gastos apuntados, aquí verás la comparación mes a mes."));
+}
+
 /* ---------- Pestañas y modo calendario ---------- */
 function setTab(name){
   tab=name;
+  if(name==="money")fillCfg();
   habitMode=(name==="habits");
   applyTab();
   renderAll();
@@ -855,13 +1549,15 @@ function applyTab(){
   $("#viewTasks").hidden=tab!=="tasks";
   $("#viewHabits").hidden=tab!=="habits";
   $("#viewProjects").hidden=tab!=="projects";
+  $("#viewExercise").hidden=tab!=="exercise";
+  $("#viewMoney").hidden=tab!=="money";
   document.querySelectorAll(".tab").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-tab")===tab);});
 }
 document.querySelectorAll(".tab").forEach(function(b){
   b.addEventListener("click",function(){setTab(b.getAttribute("data-tab"));});
 });
 function renderMode(){
-  var names={tasks:"📅 Calendario de tareas",habits:"🔁 Calendario de hábitos",projects:"🗂️ Calendario de proyectos (fechas objetivo)"};
+  var names={tasks:"📅 Calendario de tareas",habits:"🔁 Calendario de hábitos",projects:"🗂️ Calendario de proyectos (fechas objetivo)",exercise:"💪 Calendario de ejercicio",money:"💶 Calendario de dinero"};
   $("#modeLabel").textContent=names[tab];
   $("#legend").hidden=tab!=="habits";
 }
@@ -940,15 +1636,27 @@ function permText(){
   return {granted:"Permiso concedido ✅",denied:"Permiso bloqueado ❌ (actívalo en los ajustes del navegador o del sistema)","default":"Permiso pendiente"}[Notification.permission];
 }
 function updatePerm(){$("#permStatus").textContent=permText();}
+/* Muestra una notificación. En móvil hace falta el service worker (sw.js). */
+function showNotif(title,opts){
+  if(!("Notification" in window))return Promise.reject(new Error("Este navegador no admite notificaciones."));
+  if(Notification.permission!=="granted")return Promise.reject(new Error("El permiso no está concedido."));
+  function direct(){
+    try{new Notification(title,opts);return Promise.resolve();}
+    catch(e){return Promise.reject(new Error("Este móvil necesita el service worker (sw.js) para mostrar avisos y no está activo. Comprueba que sw.js está subido a GitHub junto a index.html."));}
+  }
+  if(!("serviceWorker" in navigator))return direct();
+  var timeout=new Promise(function(res){setTimeout(function(){res(null);},4000);});
+  var reg=navigator.serviceWorker.getRegistration().then(function(r){
+    if(r)return navigator.serviceWorker.ready;
+    return navigator.serviceWorker.register("sw.js").then(function(){return navigator.serviceWorker.ready;});
+  }).catch(function(){return null;});
+  return Promise.race([reg,timeout]).then(function(r){
+    if(r&&r.showNotification)return r.showNotification(title,opts);
+    return direct();
+  });
+}
 function notify(title,body,tag){
-  if(!("Notification" in window)||Notification.permission!=="granted")return;
-  var opts={body:body,tag:tag,icon:"icon-192.png"};
-  function fallback(){try{new Notification(title,opts);}catch(e){}}
-  if("serviceWorker" in navigator){
-    navigator.serviceWorker.getRegistration().then(function(r){
-      if(r&&r.showNotification)r.showNotification(title,opts);else fallback();
-    }).catch(fallback);
-  }else fallback();
+  return showNotif(title,{body:body,tag:tag,icon:"icon-192.png"}).catch(function(){});
 }
 function loadSent(){try{return JSON.parse(localStorage.getItem(NKEY))||{};}catch(e){return {};}}
 function tick(){
@@ -976,14 +1684,23 @@ function tick(){
       fire("h|"+hb.id+"|"+tk+"|"+hb.remind,"🔁 "+hb.name,hb.desc||"Es hora de tu hábito de hoy");
     }
   });
+  var cc=state.moneyCfg;
+  if(Number(cc.salary)>0){
+    var nd=new Date(),dimN=new Date(nd.getFullYear(),nd.getMonth()+1,0).getDate();
+    if(nd.getDate()===Math.min(Number(cc.day)||1,dimN)){
+      fire("s|"+tk,"💶 Hoy es día de cobro","Tu sueldo ("+money(cc.salary)+") ya está apuntado en la agenda.");
+    }
+  }
   if(changed){try{localStorage.setItem(NKEY,JSON.stringify(sent));}catch(e){}}
 }
 function askPermission(cb){
-  if(!("Notification" in window)){updatePerm();return;}
-  if(Notification.permission==="default"){
-    var r=Notification.requestPermission(function(){updatePerm();if(cb)cb();});
-    if(r&&r.then)r.then(function(){updatePerm();if(cb)cb();});
-  }else{updatePerm();if(cb)cb();}
+  if(!("Notification" in window)){updatePerm();if(cb)cb();return;}
+  if(Notification.permission!=="default"){updatePerm();if(cb)cb();return;}
+  var called=false;
+  function fin(){if(called)return;called=true;updatePerm();if(cb)cb();}
+  var r;
+  try{r=Notification.requestPermission(fin);}catch(e){fin();return;}
+  if(r&&r.then)r.then(fin,fin);
 }
 $("#sNotify").addEventListener("change",function(e){
   state.settings.notify=e.target.checked;
@@ -991,8 +1708,19 @@ $("#sNotify").addEventListener("change",function(e){
   if(e.target.checked)askPermission(tick);
 });
 $("#btnTestNotif").addEventListener("click",function(){
+  var out=$("#testResult");
+  out.textContent="Probando…";
   askPermission(function(){
-    if(Notification.permission==="granted")notify("📅 Mi Agenda","Las notificaciones funcionan correctamente.","test-"+Date.now());
+    if(!("Notification" in window)){out.textContent="❌ Este navegador no admite notificaciones.";return;}
+    if(Notification.permission!=="granted"){
+      out.textContent=Notification.permission==="denied"
+        ?"❌ El permiso está bloqueado: actívalo para este sitio en los ajustes del navegador o del sistema."
+        :"❌ Falta aceptar el permiso en la ventana que pide el navegador.";
+      return;
+    }
+    showNotif("📅 Mi Agenda",{body:"Las notificaciones funcionan correctamente.",tag:"test-"+Date.now(),icon:"icon-192.png"})
+      .then(function(){out.textContent="✅ Enviada. Si no la ves, revisa que el navegador o la app tengan las notificaciones permitidas en el sistema y que no esté activo el modo No molestar.";})
+      .catch(function(e){out.textContent="❌ "+e.message;});
   });
 });
 setInterval(tick,30000);
@@ -1056,8 +1784,8 @@ $("#fileImport").addEventListener("change",function(e){
 });
 
 /* ---------- Navegación y color ---------- */
-$("#prev").addEventListener("click",function(){view.m--;if(view.m<0){view.m=11;view.y--;}renderCalendar();});
-$("#next").addEventListener("click",function(){view.m++;if(view.m>11){view.m=0;view.y++;}renderCalendar();});
+$("#prev").addEventListener("click",function(){view.m--;if(view.m<0){view.m=11;view.y--;}renderAll();});
+$("#next").addEventListener("click",function(){view.m++;if(view.m>11){view.m=0;view.y++;}renderAll();});
 $("#goToday").addEventListener("click",function(){
   var n=new Date();view={y:n.getFullYear(),m:n.getMonth()};selected=todayKey();
   if(!editingId)$("#fDate").value=selected;
@@ -1074,9 +1802,16 @@ function renderAll(){
   renderList();
   renderHabits();
   renderProjects();
+  renderExercise();
+  renderMoney();
+  renderSavings();
 }
 
 /* ---------- Inicio ---------- */
+applyFixed();
+save();
+setInterval(function(){if(applyFixed())renderAll();},60000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&applyFixed())renderAll();});
 resetForm();
 applyTab();
 renderAll();
